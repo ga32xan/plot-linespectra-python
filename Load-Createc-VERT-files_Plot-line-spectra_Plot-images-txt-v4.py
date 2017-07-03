@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: UTF-8 -*-
 ################################
-### Load-Createc-VERT-files_Plot-line-spectra_Plot-images-txt-v3
+### Load-Createc-VERT-files_Plot-line-spectra_Plot-images-txt-v4
 ### Version 3, 06/30/2017
 ### works for ### Python: 3.5.2 --  Matplotlib: 1.1.5  --  Numpy: 1.1.11  --  Scipy: 0.17.0
 ################################
@@ -22,14 +22,23 @@
 #################### EDIT HERE ####################
 #This is where the series of line spectra can be found
 spectrum_files = 'F160627.153149.L*.VERT'
-#This is the gwyddion text matrix export of the topography file
+contrast_spec = 'afmhot'
+#This is the gwyddion text matrix export of the topography file, level beforehand
+#Important: Do not trim images, and record them in the same size as u did the spectra on
+#!Otherwise the positions will not match! => see non-square.txt and non-sqaure.pdf
 data_name='F160627.152758.txt'
+contrast_topo = 'afmhot'
 #This is the gwyddion text matrix export of the topography file
 didv_name='didv.txt'
-with_didv = 1
+contrast_didv = 'afmhot'
+with_didv = 0
 ###################################################
 # run with 'python3 Load-Createc-VERT-files_Plot-line-spectra_Plot-images-txt-v4'
 ################################
+#
+## color maps. Please refer to https://matplotlib.org/examples/color/colormaps_reference.html
+## and change lines 25,28,31
+#
 #### DEBUG mode ####
 debug = 1
 debug2= 0	#adds some return values of functions ... gets a little messy
@@ -49,6 +58,7 @@ class bcolors:
 import matplotlib
 matplotlib.use('TkAgg') 
 import matplotlib.pyplot as plt		
+#import matplotlib.ticker as ticker		#Play-around with tick spacings etc. NOT implemented
 # did change to import pyplot NOT pylab since clearer namespace
 # see https://stackoverflow.com/questions/11469336/what-is-the-difference-between-pylab-and-pyplot
 from matplotlib.widgets import Slider, Button, RadioButtons
@@ -229,7 +239,7 @@ def save(val):
 	unten = sunten.val
 	oben = soben.val
 ########################################################################################
-########################################################################################
+###########################  MAIN ROUTINE  #############################################
 ########################################################################################
 ########################################################################################
 if debug2:	print(bcolors.OKBLUE + "\nThis is funcion main()" + bcolors.ENDC)
@@ -240,14 +250,18 @@ print(bcolors.HEADER + "### works with Python: 3.5.2 --  Matplotlib: 1.1.5  --  
 print(bcolors.HEADER + "################################################################################################" + bcolors.ENDC)
 
 #Load data
+#Topography
 if debug:	print ("\n...Loading Topographic information...")
 ima,imagesize=load_image(data_name)
 
-#comment if yout don't have an additional dI/dV image saved
+#Load data
+#dI/dV
 if with_didv:
 	if debug:	print ("\n...Loading dI/dV information...")
 	didv,didvsize=load_image(didv_name) 
 
+#Load data
+#Spectra
 if debug:	print ("\n...Loading Spectral information...")
 spec=glob.glob(spectrum_files)		#creates array with spectral *.VERT filenames
 spec.sort()
@@ -296,7 +310,7 @@ for n,i in enumerate(matrixy):
 			matrixyneu[-1].append(sum(matrixy[n][m-4:m])/5)
 matrixyneu=np.array(matrixyneu,float)
 
-# New or old contrast
+# Choose contrast range
 if debug2:	print(bcolors.WARNING + "\n_Input needed_" + bcolors.ENDC)	
 
 cons=[]
@@ -308,18 +322,18 @@ while ans!='o' or ans!='n':
 		break
 	elif ans=='n':
 		#find out clim topo
-		topounten,topooben=contrast(ima,'viridis')
+		topounten,topooben=contrast(ima,contrast_topo)
 		cons.append(topounten)
 		cons.append(topooben)
 		#find out clim didv
 
 		if with_didv:
-			didvunten,didvoben=contrast(didv,'afmhot')
+			didvunten,didvoben=contrast(didv,contrast_didv)
 			cons.append(didvunten)
 			cons.append(didvoben)
 
 		#find out clim specs along line
-		specunten,specoben=contrast(matrixyneu.T,'afmhot')
+		specunten,specoben=contrast(matrixyneu.T,contrast_spec)
 		cons.append(specunten)
 		cons.append(specoben)
 
@@ -328,11 +342,8 @@ while ans!='o' or ans!='n':
 		break
 ######################### Plot section #########################
 ## Font setup 
-labelfontsize=16
-tickfontsize=8
-
-## color maps. Please refer to https://matplotlib.org/examples/color/colormaps_reference.html
-## and change cmap accordingly
+labelfontsize=18
+tickfontsize=16
 
 # Total image size 
 ## plt.figure(figsize=(x,y) determines size of graphic in x,y direction, values given in inches (1"=2.54cm)
@@ -349,32 +360,48 @@ if with_didv:
 if debug:	print("\n...Plotting topography...")	
 plt.subplot(gs[0])
 plt.title('Topography',fontsize=labelfontsize)
-plt.imshow(ima,cmap='viridis',extent=[0,imagesize[0],0,imagesize[1]],vmin=cons[0],vmax=cons[1])
+plt.imshow(ima,cmap=contrast_topo,extent=[0,imagesize[0],0,imagesize[1]],vmin=cons[0],vmax=cons[1])
 
-## draw without ticks, if ticks wanted => comment following two lines
-#if debug:	print("...Without ticks...")	
-#plt.xticks([])
-#plt.yticks([])
-##
+#### Tick setup
+#set size of tick label
+plt.tick_params(labelsize=tickfontsize)    
+#
+
+## where a tick label is drawn
+plt.tick_params(labelbottom='off',labelleft='off',labeltop='off',labelright='off')    
+##draw ticks only with direction 'in', 'out' and 'inout' are possible values
+plt.tick_params(axis='both',direction='in')
+##control if top/right ticks are drawn
+#plt.tick_params(top='on',right='on')
+####
+
+#disable ticks completely, comment if u want ticks
+plt.xticks([])
+plt.yticks([])
 
 # plots points of spectra in topography
 # ms controlls size of dots for spectral positions, 
-# possible hatches: [‘/’ | ‘\’ | ‘|’ | ‘-‘ | ‘+’ | ‘x’ | ‘o’ | ‘O’ | ‘.’ | ‘*’] 
+# possible shapes: [‘/’ | ‘\’ | ‘|’ | ‘-‘ | ‘+’ | ‘x’ | ‘o’ | ‘O’ | ‘.’ | ‘*’] 
 if debug:	print("...Adding circles @ spectra positions...")	
 for pos in spec_posi:
 	plt.plot(pos[0],pos[1],'o',color='white',ms=3)
 
 #plots scablebar
+#"""
+################## Double check its size ... something is wrong here ##################
 if debug:	print("...Adding scalebar...")	
-scalebar = ScaleBar(imagewidth/pixelnumber) # 1px = [arg] meter
+scalebar = ScaleBar(imagewidth/pixelnumber*10*5) # 1px = [arg] meter
 plt.gca().add_artist(scalebar)
+#"""
+#######################################################################################
 
-##
+"""
+################## Alternate way to plot scalebar, doesn't draw anything ...###########
 #plots scalebar on starting position, (0,0) is lower left corner
-#for x in np.linspace(1,6,1000):		#creates an array with 1000 points in the closed interval between [1,6]
-#	plt.plot(x,5,color='black')
-## Needs some work to be done - doesn't work!
-
+for x in np.linspace(1,6,1000):		#creates an array with 1000 points in the closed interval between [1,6]
+	plt.plot(x,5,color='white')
+#######################################################################################
+"""
 ###
 #if debug:	print("...Adding colorbar...")	
 #inserts color bar for topography image
@@ -384,11 +411,11 @@ plt.gca().add_artist(scalebar)
 if with_didv:
 	plt.subplot(gs[1])
 	plt.title('dI/dV',fontsize=labelfontsize)
-	plt.imshow(didv,cmap='afmhot',extent=[0,imagesize[0],0,imagesize[1]],vmin=cons[2],vmax=cons[3])
+	plt.imshow(didv,cmap=contrast_didv,extent=[0,imagesize[0],0,imagesize[1]],vmin=cons[2],vmax=cons[3])
 
 	## draw without ticks, if ticks wanted => comment following two lines
-	#plt.xticks([])
-	#plt.yticks([])
+#	plt.xticks(fontsize=tickfontsize)
+#	plt.yticks(fontsize=tickfontsize)
 	##
 
 	##sets scalebar (0,0) unten links referenz
@@ -407,9 +434,9 @@ if with_didv:
 
 plt.title('Line spectra',fontsize=labelfontsize)
 # configures line spectra 'map'
-plt.imshow(matrixy.T,cmap='afmhot',extent=[0,line_length,min(matrixx[0]),max(matrixx[0])],aspect='auto',vmin=cons[2],vmax=cons[3])
+plt.imshow(matrixy.T,cmap=contrast_spec,extent=[0,line_length,min(matrixx[0]),max(matrixx[0])],aspect='auto',vmin=cons[2],vmax=cons[3])
 if with_didv:
-	plt.imshow(matrixy.T,cmap='afmhot',extent=[0,line_length,min(matrixx[0]),max(matrixx[0])],aspect='auto',vmin=cons[4],vmax=cons[5])
+	plt.imshow(matrixy.T,cmap=contrast_spec,extent=[0,line_length,min(matrixx[0]),max(matrixx[0])],aspect='auto',vmin=cons[4],vmax=cons[5])
 
 if debug:	print("...Adding axes...")	
 plt.xlabel('Distance x [nm]',fontsize=labelfontsize)

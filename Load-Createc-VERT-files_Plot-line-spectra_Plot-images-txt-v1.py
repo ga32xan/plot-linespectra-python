@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+# -*- coding: UTF-8 -*-
 ################################
 ### Load-Createc-VERT-files_Plot-line-spectra_Plot-images-txt-v1
 ### Version 1, 06/29/2017
@@ -30,8 +32,8 @@ from scipy.optimize import curve_fit as cv
 import glob
 from matplotlib import gridspec
 import re
-#from matplotlib_scalebar.scalebar import ScaleBar
-#import gwy
+from matplotlib_scalebar.scalebar import ScaleBar
+
 
 def string_simplify(str):
 	"""simplifies a string (i.e. removes replaces space for "_", and makes it lowercase"""
@@ -68,7 +70,13 @@ def load_spec(data):
 	posi=posi/dacstep
 	posi[0]=(pixelsize[0]/2.0+posi[0])*imagesize[0]/pixelsize[0]/10
 	posi[1]=(pixelsize[1]-posi[1])*imagesize[1]/pixelsize[1]/10
-    
+
+	global pixelnumber
+	pixelnumber = pixelsize[0]		# gets numbers of pixels in a line
+#	print("Spectral image is {0} pixel wide".format(pixelnumber))
+#	global scalebar_pixelsize
+#	scalebar_pixelsize=imagesize[0]*1e-10/pixelsize[0]		# global variable to calculate how large a pixel is in [m]
+
 	A=np.genfromtxt(data,delimiter='	',skip_header=212,skip_footer=0)
 	U=A[:,3]
 	dIdU=A[:,2]
@@ -97,7 +105,9 @@ def load_image(data):
 	f.close()
 	
 	ext=np.array([float(header['width']),float(header['height'])],float)
-	
+	global imagewidth
+	imagewidth = ext[0]*1e-9	#fetches imagewidth in meter
+	print("Image is {0} meter wide".format(imagewidth))
 	X=np.loadtxt(data)*1e10	#set height information to angströms, as data is saved in [m] by gwyddion
 	
 	return(X,ext)
@@ -128,8 +138,8 @@ def contrast(X,col):
 	l = plt.imshow(X, cmap=col, aspect='auto', vmin=mini, vmax=maxi)
 
 	axcolor = 'lightgoldenrodyellow'
-	axunten = plt.axes([0.25, 0.1, 0.65, 0.03], axisbg=axcolor)		#facecolor=axcolor
-	axoben = plt.axes([0.25, 0.15, 0.65, 0.03], axisbg=axcolor)
+	axunten = plt.axes([0.25, 0.1, 0.65, 0.03], facecolor=axcolor)		#facecolor=axcolor
+	axoben = plt.axes([0.25, 0.15, 0.65, 0.03], facecolor=axcolor)
 	
 	global sunten
 	global soben
@@ -195,10 +205,12 @@ def f(x,a,b,c):
 #Adapt for each line spectra series
 spec=glob.glob('F160627.153149.L*.VERT')
 spec.sort()
+
 #This is the gwyddion text matrix export of the topography file where the position of single spectra is marked
 #Adapt for each line spectra
 data_name='F160627.152758.txt'
 ima,imagesize=load_image(data_name)
+
 #Adapt for each line spectra
 #comment if not needed
 #didv,didvsize=load_image('F170509.113636-didv.txt') #optional dI/dV channel
@@ -218,7 +230,7 @@ matrixx=np.array(matrixx,float)
 matrixy=np.array(matrixy,float)
 
 line_length=np.sqrt((ext[0][0]-ext[1][0])**2+(ext[0][1]-ext[1][1])**2)
-
+print ("Spectral line_length is {0} nm".format(line_length))
 
 #normalize specs
 #change for range where max is found => -700 , 0
@@ -285,8 +297,8 @@ plt.title('Topography',fontsize=fontna)
 plt.imshow(ima,cmap='viridis',extent=[0,imagesize[0],0,imagesize[1]],vmin=cons[0],vmax=cons[1])
 
 ## draw without ticks, if ticks wanted => comment following two lines
-plt.xticks([])
-plt.yticks([])
+#plt.xticks([])
+#plt.yticks([])
 ##
 
 # plots points of spectra in topography
@@ -294,15 +306,17 @@ plt.yticks([])
 for pos in spec_posi:
 	plt.plot(pos[0],pos[1],'o',color='white',ms=3)
 
-"""
-scalebar = ScaleBar(1e-10) # 1 pixel = x meter
+#plots scablebar
+scalebar = ScaleBar(imagewidth/pixelnumber) # 1px = [arg] meter
+#scalebar = ScaleBar(scalebar_pixelsize) # 1 pixel = scalebar_pixelsize meter
 plt.gca().add_artist(scalebar)
-"""
 
+###########
 #plots scalebar on starting position, (0,0) is lower left corner
-for x in np.linspace(1,6,1000):		#creates an array with 1000 points in the closed interval between [1,6]
-	plt.plot(x,5,color='black')
+#for x in np.linspace(1,6,1000):		#creates an array with 1000 points in the closed interval between [1,6]
+#	plt.plot(x,5,color='black')
 ## Needs some work to be done - doesn't work!
+###########
 
 #inserts color bar for topography image
 #plt.colorbar()

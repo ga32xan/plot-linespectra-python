@@ -7,10 +7,10 @@
 ################################
 ### Alexander Riss	: Data loading and header parsing
 ### Mathias Pörtner	: Adding graph abilities and plotting spectral line 'maps'
-### Domenik Zimmermann	: Documentation and dependency installation instruction, version testing, debug modes 
+### Domenik Zimmermann	: Documentation and dependency installation intstruction, version testing, debug modes 
 ################################
 """Check scalebar size => still need to get the actual size of a pixel!"""
-""" Disable / Enable in line 369 (Topography) / line 394 (dI/dV)"""
+""" Disable / Enable in line """
 ################################
 ### For dependencies on Ubuntu 16.04
 ### sudo apt-get install python3 python3-matplotlib python3-numpy python3-scipy python3-pip python-gtk2-dev
@@ -18,21 +18,17 @@
 ################################
 # Copy the script alongside with your spectral files *.L00*.VERT into a folder
 # Edit the topographic image u want to show with gwyddion and save it as ASCII data matrix (.txt) in the same folder
-# Optional: Edit the dI/dV image u want and save it as ASCII data matrix (.txt) in the same folder
-#################### EDIT HERE ####################
+####################
 #This is where the series of line spectra can be found
 spectrum_files = 'F160627.153149.L*.VERT'
 #This is the gwyddion text matrix export of the topography file
 data_name='F160627.152758.txt'
-#This is the gwyddion text matrix export of the topography file
-didv_name='didv.txt'
-with_didv = 1
-###################################################
-# run with 'python3 Load-Createc-VERT-files_Plot-line-spectra_Plot-images-txt-v4'
+####################
+# run with 'python3 Load-Createc-VERT-files_Plot-line-spectra_Plot-images-txt-v1'
 ################################
 #### DEBUG mode ####
 debug = 1
-debug2= 0	#adds some return values of functions ... gets a little messy
+debug2= 1	#adds some return values of functions ... gets a little messy
 ################################
 ## Terminal Color ANSI escape sequences
 class bcolors:
@@ -244,9 +240,8 @@ if debug:	print ("\n...Loading Topographic information...")
 ima,imagesize=load_image(data_name)
 
 #comment if yout don't have an additional dI/dV image saved
-if with_didv:
-	if debug:	print ("\n...Loading dI/dV information...")
-	didv,didvsize=load_image(didv_name) 
+#if debug:	print ("\n...Loading dI/dV information...")
+#didv,didvsize=load_image('F170509.113636-didv.txt') 
 
 if debug:	print ("\n...Loading Spectral information...")
 spec=glob.glob(spectrum_files)		#creates array with spectral *.VERT filenames
@@ -313,16 +308,15 @@ while ans!='o' or ans!='n':
 		cons.append(topooben)
 		#find out clim didv
 
-		if with_didv:
-			didvunten,didvoben=contrast(didv,'afmhot')
-			cons.append(didvunten)
-			cons.append(didvoben)
+		#comment 3 following line if no dI/dV
+#		didvunten,didvoben=contrast(didv,'afmhot')
+#		cons.append(didvunten)
+#		cons.append(didvoben)
 
 		#find out clim specs along line
 		specunten,specoben=contrast(matrixyneu.T,'afmhot')
 		cons.append(specunten)
 		cons.append(specoben)
-
 		if debug: print("Saving new contrasts in file {0}".format(data_name[:-4]+'.csv'))
 		np.savetxt(data_name[:-4]+'.csv',cons,delimiter=',')
 		break
@@ -336,14 +330,12 @@ tickfontsize=8
 
 # Total image size 
 ## plt.figure(figsize=(x,y) determines size of graphic in x,y direction, values given in inches (1"=2.54cm)
+##	without dI/dV => figsize=(10,5)		with dI/dV => figsize=(15,5)		
 plt.figure(figsize=(10,5),dpi=300,tight_layout=True)    # tight_layout=False may be required for tweeking
-if with_didv:
-	plt.figure(figsize=(15,5),dpi=300,tight_layout=True)    # tight_layout=False may be required for tweeking
 
 # How many subfigures are expected? 
+##	without dI/dV => .GridSpec(1, 2)	with dI/dV => .GridSpec(1, 3)
 gs = gridspec.GridSpec(1, 2)
-if with_didv:
-	gs = gridspec.GridSpec(1, 3)
 
 ######## Plots topography image
 if debug:	print("\n...Plotting topography...")	
@@ -381,35 +373,31 @@ plt.gca().add_artist(scalebar)
 #plt.colorbar()
 
 ######## Plots dI/dV image
-if with_didv:
-	plt.subplot(gs[1])
-	plt.title('dI/dV',fontsize=labelfontsize)
-	plt.imshow(didv,cmap='afmhot',extent=[0,imagesize[0],0,imagesize[1]],vmin=cons[2],vmax=cons[3])
+"""
+#plt.subplot(gs[1])
+#plt.title('dI/dV',fontsize=labelfontsize)
+#plt.imshow(didv,cmap='afmhot',extent=[0,11.05,0,11.05*230/512],vmin=cons[2],vmax=cons[3])
 
-	## draw without ticks, if ticks wanted => comment following two lines
-	#plt.xticks([])
-	#plt.yticks([])
-	##
+## draw without ticks, if ticks wanted => comment following two lines
+#plt.xticks([])
+#plt.yticks([])
+##
 
-	##sets scalebar (0,0) unten links referenz
-	#for x in np.linspace(1,6,1000):
-	#	plt.plot(x,1,color='white')
-
+##sets scalebar (0,0) unten links referenz
+#for x in np.linspace(1,6,1000):
+#	plt.plot(x,1,color='white')
+"""
 
 ######## Plots spectral map
 if debug:	print("\n...Plotting line spectra...")	
-
 ## set new position of spectral map if no dI/dV is present
 ## without dI/dV => plt.subplot(gs[1])		with dI/dV => plt.subplot(gs[2])
 plt.subplot(gs[1])
-if with_didv:
-	plt.subplot(gs[2])
-
 plt.title('Line spectra',fontsize=labelfontsize)
 # configures line spectra 'map'
+# with dI/dV 	=> vmin=cons[4],vmax=cons[5])
+# without dI/dV => vmin=cons[2],vmax=cons[3])
 plt.imshow(matrixy.T,cmap='afmhot',extent=[0,line_length,min(matrixx[0]),max(matrixx[0])],aspect='auto',vmin=cons[2],vmax=cons[3])
-if with_didv:
-	plt.imshow(matrixy.T,cmap='afmhot',extent=[0,line_length,min(matrixx[0]),max(matrixx[0])],aspect='auto',vmin=cons[4],vmax=cons[5])
 
 if debug:	print("...Adding axes...")	
 plt.xlabel('Distance x [nm]',fontsize=labelfontsize)

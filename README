@@ -1,2 +1,17 @@
-This is a initial commit with working python script to process lines spectra created by PSTMAFM.exe
-See python file comments for more detail!
+This python script lets you choose and plot information from STS together with related topographic image.
+
+It works with STS (.VERT) files created with Createc Software (PSTMAFM), although topographic and dIdV images have to be exported 
+with gwyddion as ASII data matrix (.txt) to allow for parsing with this script. 
+Please choose 'dot decimal seperator' & 'add information header' in the export dialog.
+
+Start it with python3 and follow the graphical file selection dialog. If you don't have a dIdV channel recorded don't select one.
+
+For each image you will be asked for a contrast range which you choose and save from the popup windows. 
+Close them after you have made your choise.
+
+The resulting images are plotted and saved as pdf for further use.
+
+To change the graph appearance, some source code editing is needed (Colorbars, Scalebars, En/Disabling Ticks ...) but most of it is obvious
+and already added as comment. Feel free to experiment.
+
+Batch processing of whole folders will (maybe) be added in the future. 

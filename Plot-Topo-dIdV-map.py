@@ -7,7 +7,7 @@
 ################################
 ### Alexander Riss	: Data loading and header parsing
 ### Mathias Pörtner	: Adding graph abilities and plotting spectral line 'maps'
-### Domenik Zimmermann	: Documentation and dependency checks, GUI, debug modes 
+### Domenik Zimmermann	: Documentation and dependency installation instruction, version testing, debug modes 
 ################################
 """Check scalebar size => still need to get the actual size of a pixel!"""
 """ Disable / Enable in line 369 (Topography) / line 394 (dI/dV)"""
@@ -16,22 +16,19 @@
 ### sudo apt-get install python3 python3-matplotlib python3-numpy python3-scipy python3-pip python-gtk2-dev
 ### pip3 install matplotlib-scalebar
 ################################
-# Copy the script alongside with your spectral files *.L00*.VERT into a folder
-# Edit the topographic image u want to show with gwyddion and save it as ASCII data matrix (.txt) in the same folder
-# Optional: Edit the dI/dV image u want and save it as ASCII data matrix (.txt) in the same folder
+### For dependencies on Windows
+### Install Anaconda (tested for Anaconda3)
+### Run an Ipython console with this file
+################################
+# Copy the script to where you can access it
+# Edit the topographic image u want to show with gwyddion and save it as ASCII data matrix (.txt)
+# Optional: Edit the dI/dV image and save it as ASCII data matrix (.txt)
 #################### EDIT HERE ####################
-#This is where the series of line spectra can be found
-#spectrum_files = 'F160627.153149.L*.VERT'
 contrast_spec = 'afmhot'
-#This is the gwyddion text matrix export of the topography file, level beforehand
 #Important: Do not trim images, and record them in the same size as u did the spectra on
-#!Otherwise the positions will not match! => see non-square.txt and non-sqaure.pdf
-#data_name='F160627.152758.txt'
+#!Otherwise the positions will not match! => see non-square.txt and non-square.pdf
 contrast_topo = 'afmhot'
-#This is the gwyddion text matrix export of the topography file
-#didv_name='didv.txt'
 contrast_didv = 'afmhot'
-#with_didv = 0
 ###################################################
 # run with 'python3 Plot-Topo-dIdV-map.py'
 ################################
@@ -41,22 +38,22 @@ contrast_didv = 'afmhot'
 #
 #### DEBUG mode ####
 debug = 1
-debug2= 1	#adds some return values of functions ... gets a little messy
+debug2= 0	#adds some return values of functions ... gets a little messy
 ################################
 ## Terminal Color ANSI escape sequences
 class bcolors:
     HEADER 		= '\033[95m'
     OKBLUE 		= '\033[94m'
-    WARNING 	= '\033[93m'
-    OKGREEN 	= '\033[92m'
+    WARNING 		= '\033[93m'
+    OKGREEN 		= '\033[92m'
     FAIL 		= '\033[91m'
     ENDC 		= '\033[0m'
     BOLD 		= '\033[1m'
-    UNDERLINE 	= '\033[4m'
+    UNDERLINE 		= '\033[4m'
 ################################
 
 import matplotlib
-matplotlib.use('TkAgg') 		#uses tkinter as backend for displaying graphs
+matplotlib.use('TkAgg') 			#uses tkinter as backend for displaying graphs
 import matplotlib.pyplot as plt		
 #import matplotlib.ticker as ticker		#Play-around with tick spacings etc. NOT implemented
 # did change to import pyplot NOT pylab since clearer namespace
@@ -68,7 +65,7 @@ import glob
 from matplotlib import gridspec
 import re
 from matplotlib_scalebar.scalebar import ScaleBar
-##for file choosing dialog ##
+##for file opening dialog ##
 import tkinter as tk
 from tkinter import filedialog
 ##
@@ -113,9 +110,6 @@ def load_spec(data):
 
 	global pixelnumber
 	pixelnumber = pixelsize[0]		# gets numbers of pixels in a line
-#	print("Spectral image is {0} pixel wide".format(pixelnumber))
-#	global scalebar_pixelsize
-#	scalebar_pixelsize=imagesize[0]*1e-10/pixelsize[0]		# global variable to calculate how large a pixel is in [m]
 
 	A=np.genfromtxt(data,delimiter='	',skip_header=212,skip_footer=0)
 	U=A[:,3]
@@ -155,6 +149,7 @@ def load_image(data):
 	return(X,ext)			#X contains height information in A as [[]] , ext contains amge width in nm as []
 
 def contrast(X,col):
+	"""Choose contrast and save to .csv for future use"""
 	mini=100.0
 	maxi=0.0
 	for i in X:
@@ -267,7 +262,7 @@ if debug:	print ("\n...Loading Topographic information...")
 
 root = tk.Tk()
 root.withdraw()
-data_name = filedialog.askopenfilename()
+data_name = filedialog.askopenfilename(filetypes=[('Topography ASCII data matrix','.txt')], title='Select Topography ASCII data matrix')
 ima,imagesize=load_image(data_name)
 root.destroy()
 
@@ -283,10 +278,10 @@ print(bcolors.WARNING + "Leave empty if no dIdV is present"+ bcolors.ENDC)
 
 root = tk.Tk()
 root.withdraw()
-didv_name = filedialog.askopenfilename()
+didv_name = filedialog.askopenfilename(filetypes=[('dIdV ASCII data matrix','.txt')], title='Select dIdV ASCII data matrix')
 root.destroy()
 
-if didv_name == '':				#checking for empty string and dont read dIdV data / configure graphics output woth with_didv flag
+if didv_name == '':				#checking for empty string and dont read dIdV data / configure graphics output with with_didv flag
 	if debug: print("Omitting dIdV data ...")
 	with_didv = 0
 else:
@@ -302,7 +297,7 @@ if debug:	print ("\n...Loading Spectral information...")
 
 root = tk.Tk()
 root.withdraw()
-spectrum_files = filedialog.askopenfilenames()		#creates a tuple with selected spectra files files
+spectrum_files = filedialog.askopenfilenames(filetypes=[('STS spectrum','.VERT')], title='Select Spectrum files')		#creates a tuple with selected spectra files files
 root.destroy()
 
 ext=[]
@@ -363,7 +358,6 @@ while ans!='o' or ans!='n':
 	elif ans=='n':
 		#find out clim topo
 		if debug2: print("... for topography")
-
 		topounten,topooben=contrast(ima,contrast_topo)
 		cons.append(topounten)							#Code hangs here
 		cons.append(topooben)
@@ -371,12 +365,14 @@ while ans!='o' or ans!='n':
 		#find out clim didv
 
 		if with_didv:
+			if debug2: print("... for dIdV")
 			didvunten,didvoben=contrast(didv,contrast_didv)
 			cons.append(didvunten)
 			cons.append(didvoben)
 			if debug2: print("Done for dIdV")
 
 		#find out clim specs along line
+		if debug2: print("... for spectra")
 		specunten,specoben=contrast(matrixyneu.T,contrast_spec)
 		cons.append(specunten)
 		cons.append(specoben)

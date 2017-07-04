@@ -7,7 +7,7 @@
 ################################
 ### Alexander Riss	: Data loading and header parsing
 ### Mathias Pörtner	: Adding graph abilities and plotting spectral line 'maps'
-### Domenik Zimmermann	: Documentation and dependency installation instruction, version testing, debug modes 
+### Domenik Zimmermann	: Documentation and dependency testing, debug modes, GUI
 ################################
 """Check scalebar size => still need to get the actual size of a pixel!"""
 """ Disable / Enable in line 369 (Topography) / line 394 (dI/dV)"""

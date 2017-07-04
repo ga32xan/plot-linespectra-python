@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: UTF-8 -*-
 ################################
-### Load-Createc-VERT-files_Plot-line-spectra_Plot-images-txt-v4
+### Plot-Topo-dIdV-map.py
 ### Version 3, 06/30/2017
 ### works for ### Python: 3.5.2 --  Matplotlib: 1.1.5  --  Numpy: 1.1.11  --  Scipy: 0.17.0
 ################################
@@ -33,7 +33,7 @@ contrast_topo = 'afmhot'
 contrast_didv = 'afmhot'
 #with_didv = 0
 ###################################################
-# run with 'python3 Load-Createc-VERT-files_Plot-line-spectra_Plot-images-txt-v4'
+# run with 'python3 Plot-Topo-dIdV-map.py'
 ################################
 #
 ## color maps. Please refer to https://matplotlib.org/examples/color/colormaps_reference.html

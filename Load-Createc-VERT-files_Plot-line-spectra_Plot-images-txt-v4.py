@@ -9,29 +9,28 @@
 ### Mathias Pörtner	: Adding graph abilities and plotting spectral line 'maps'
 ### Domenik Zimmermann	: Documentation and dependency installation instruction, version testing, debug modes 
 ################################
-"""Check scalebar size => still need to get the actual size of a pixel!"""
+"""Check scalebar size => still need to get the actual size of a pixel right!"""
 """ Disable / Enable in line 369 (Topography) / line 394 (dI/dV)"""
 ################################
 ### For dependencies on Ubuntu 16.04
 ### sudo apt-get install python3 python3-matplotlib python3-numpy python3-scipy python3-pip python-gtk2-dev
 ### pip3 install matplotlib-scalebar
 ################################
+### For Windows: 
+### Install Anaconda (tested with Aanconda3) and launch it
+### Launch a qtconsole (choose within Anaconda Navigator)
+### Copy code there and execute
+################################
 # Copy the script alongside with your spectral files *.L00*.VERT into a folder
 # Edit the topographic image u want to show with gwyddion and save it as ASCII data matrix (.txt) in the same folder
+# Export options:
+#	dot decimal seperator
+#	informational header
 # Optional: Edit the dI/dV image u want and save it as ASCII data matrix (.txt) in the same folder
 #################### EDIT HERE ####################
-#This is where the series of line spectra can be found
-spectrum_files = 'F160627.153149.L*.VERT'
 contrast_spec = 'afmhot'
-#This is the gwyddion text matrix export of the topography file, level beforehand
-#Important: Do not trim images, and record them in the same size as u did the spectra on
-#!Otherwise the positions will not match! => see non-square.txt and non-sqaure.pdf
-data_name='F160627.152758.txt'
 contrast_topo = 'afmhot'
-#This is the gwyddion text matrix export of the topography file
-didv_name='didv.txt'
 contrast_didv = 'afmhot'
-with_didv = 0
 ###################################################
 # run with 'python3 Load-Createc-VERT-files_Plot-line-spectra_Plot-images-txt-v4'
 ################################
@@ -243,26 +242,56 @@ def save(val):
 ########################################################################################
 ########################################################################################
 if debug2:	print(bcolors.OKBLUE + "\nThis is funcion main()" + bcolors.ENDC)
-print(bcolors.HEADER + "################################################################################################" + bcolors.ENDC)
-print(bcolors.HEADER + "### Load-Createc-VERT-files_Plot-line-spectra_Plot-images-txt-v3                             ###" + bcolors.ENDC)
-print(bcolors.HEADER + "### Version 3, 06/30/2017                                                                    ###" + bcolors.ENDC)
-print(bcolors.HEADER + "### works with Python: 3.5.2 --  Matplotlib: 1.1.5  --  Numpy: 1.1.11  --  Scipy: 0.17.0     ###" + bcolors.ENDC)
-print(bcolors.HEADER + "################################################################################################" + bcolors.ENDC)
+print(bcolors.HEADER + "#######################################################################" + bcolors.ENDC)
+print(bcolors.HEADER + "### Load-Createc-VERT-files_Plot-line-spectra_Plot-images-txt-v3 \t ###" + bcolors.ENDC)
+print(bcolors.HEADER + "###\t \t \t \t Version 3, 06/30/2017 \t \t \t ###" + bcolors.ENDC)
+print(bcolors.HEADER + "### works with \t Python: 3.5.2  \t \t \t \t ###" + bcolors.ENDC)
+print(bcolors.HEADER + "### \t \t Matplotlib: 1.1.5 \t \t \t \t ###" + bcolors.ENDC)
+print(bcolors.HEADER + "### \t \t Numpy: 1.1.11 \t \t \t \t ###" + bcolors.ENDC)
+print(bcolors.HEADER + "### \t \t Scipy: 0.17.0 \t \t \t \t ###" + bcolors.ENDC)
+print(bcolors.HEADER + "#######################################################################" + bcolors.ENDC)
 
 #Load data
 #Topography
+print(bcolors.WARNING + "#\nThis is the gwyddion text matrix export of your topopgraphy file"+ bcolors.ENDC) 
+print(bcolors.WARNING + "#Export options:" + bcolors.ENDC)
+print(bcolors.WARNING + "\t dot decimal seperator " + bcolors.ENDC)
+print(bcolors.WARNING + "\t informational comment header" + bcolors.ENDC)
+print(bcolors.WARNING + "#Important: Do not trim images"+ bcolors.ENDC)
+print(bcolors.WARNING + "Input something like F100101.232323.txt "+ bcolors.ENDC)
 if debug:	print ("\n...Loading Topographic information...")
+
+data_name = input(bcolors.WARNING + "Enter topography data name:"+ bcolors.ENDC)
 ima,imagesize=load_image(data_name)
 
 #Load data
 #dI/dV
-if with_didv:
+print(bcolors.WARNING + "\n#This is the gwyddion text matrix export of your dIdV file"+ bcolors.ENDC) 
+print(bcolors.WARNING + "#Export options:" + bcolors.ENDC)
+print(bcolors.WARNING + "\t dot decimal seperator " + bcolors.ENDC)
+print(bcolors.WARNING + "\t informational comment header" + bcolors.ENDC)
+print(bcolors.WARNING + "#Important: Do not trim images"+ bcolors.ENDC)
+print(bcolors.WARNING + "Input something like F100101.232323-dIdV.txt "+ bcolors.ENDC)
+print(bcolors.WARNING + "Leave empty if no dIdV is present"+ bcolors.ENDC)
+
+input2 = input(bcolors.WARNING + "Enter dIdV data name:"+ bcolors.ENDC)
+if input2 == '':				#checking for empty string and dont read dIdV data / configure graphics output woth with_didv flag
+	if debug: print("Omitting dIdV data ...")
+	with_didv = 0
+else:
 	if debug:	print ("\n...Loading dI/dV information...")
+	didv_name = input2
 	didv,didvsize=load_image(didv_name) 
+	with_didv = 1
 
 #Load data
 #Spectra
+print(bcolors.WARNING + "#This are the names of your spectral *.VERT files"+ bcolors.ENDC) 
+print(bcolors.WARNING + "Input something like F100101.232323.L*.VERT"+ bcolors.ENDC)
 if debug:	print ("\n...Loading Spectral information...")
+
+spectrum_files = input(bcolors.WARNING + "Enter spectrum data name:"+ bcolors.ENDC)
+
 spec=glob.glob(spectrum_files)		#creates array with spectral *.VERT filenames
 spec.sort()
 
@@ -309,7 +338,7 @@ for n,i in enumerate(matrixy):
 		if m%5==4:
 			matrixyneu[-1].append(sum(matrixy[n][m-4:m])/5)
 matrixyneu=np.array(matrixyneu,float)
-
+###################
 # Choose contrast range
 if debug2:	print(bcolors.WARNING + "\n_Input needed_" + bcolors.ENDC)	
 

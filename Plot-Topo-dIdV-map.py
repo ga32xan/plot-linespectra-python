@@ -75,7 +75,7 @@ def string_simplify(str):
 	return str.replace(' ','_').lower()
 
 def load_spec(data):
-	"""Reads data file for spectral information"""	
+	"""Reads gwyddion exportet ASCII data matrix file for spectral information"""	
 	header = {}
 	f = open(data, encoding='utf-8', errors='ignore')
 	if debug2: print(bcolors.OKBLUE + "\nThis is funcion load_spec()" + bcolors.ENDC)	
@@ -117,7 +117,7 @@ def load_spec(data):
 	return(U,dIdU,posi)
 
 def load_image(data):
-	"""Reads data file for topographic information, returns X:"""	
+	"""Reads .VERT file for topographic information, returns data-array X and image size array ext"""	
 	header = {}
 	f = open(data, encoding='utf-8', errors='ignore')
 	if debug2:	print(bcolors.OKBLUE + "\nThis is funcion load_image()" + bcolors.ENDC)	
@@ -285,7 +285,7 @@ if didv_name == '':				#checking for empty string and dont read dIdV data / conf
 	if debug: print("Omitting dIdV data ...")
 	with_didv = 0
 else:
-	if debug:	print ("\n...Loading dI/dV information...")
+	if debug: print ("\n...Loading dI/dV information...")
 	didv,didvsize=load_image(didv_name) 
 	with_didv = 1
 

@@ -281,13 +281,13 @@ root.withdraw()
 didv_name = filedialog.askopenfilename(filetypes=[('dIdV ASCII data matrix','.txt')], title='Select dIdV ASCII data matrix')
 root.destroy()
 
-if didv_name == '':				#checking for empty string and dont read dIdV data / configure graphics output with with_didv flag
-	if debug: print("Omitting dIdV data ...")
-	with_didv = 0
-else:
+if didv_name:				#checking for empty string and dont read dIdV data / configure graphics output with with_didv flag
 	if debug: print ("\n...Loading dI/dV information...")
 	didv,didvsize=load_image(didv_name) 
 	with_didv = 1
+else:
+	if debug: print("Omitting dIdV data ...")
+	with_didv = 0
 
 #Load data
 #Spectra
